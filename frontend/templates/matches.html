@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Matches{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-title">MATCH <span>HISTORY</span></div>
+        <div class="page-subtitle">All completed matches</div>
+    </div>
+
+    <div id="matchList">
+        <div class="skeleton" style="height:80px; border-radius:12px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:80px; border-radius:12px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:80px; border-radius:12px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadMatches() {
+    const resp = await fetch('/api/matches/history');
+    const matches = await resp.json();
+    const el = document.getElementById('matchList');
+
+    if (!matches.length) {
+        el.innerHTML = `<div class="card text-center" style="padding:48px;">
+            <div style="font-size:48px; margin-bottom:12px;">🏏</div>
+            <div style="font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-muted);">NO MATCHES YET</div>
+            <div style="color:#4b5563; margin-top:8px; font-size:14px;">Start a match from the Admin panel</div>
+        </div>`;
+        return;
+    }
+
+    el.innerHTML = matches.map(m => `
+        <div class="card mb-12" style="padding:20px; cursor:pointer;" onclick="location.href='/api/matches/${m.id}'">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div style="font-family:var(--font-display); font-size:18px; letter-spacing:2px; color:var(--text-secondary);">
+                        MATCH #${m.match_number} — ${m.date}
+                    </div>
+                    <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+                        ${m.innings1 ? `Team A: ${m.innings1.runs}/${m.innings1.wickets} (${m.innings1.overs})` : ''}
+                        ${m.innings2 ? ` vs Team B: ${m.innings2.runs}/${m.innings2.wickets} (${m.innings2.overs})` : ''}
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="badge ${m.winner === 'A' ? 'badge-green' : m.winner === 'B' ? 'badge-blue' : 'badge-gold'}">
+                        ${m.winner === 'tie' ? 'TIE' : `Team ${m.winner} Won`}
+                    </div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+                        ${m.win_margin > 0 ? `by ${m.win_margin} ${m.win_type}` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+loadMatches();
+</script>
+{% endblock %}

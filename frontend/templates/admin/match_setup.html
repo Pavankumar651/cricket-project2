@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Setup | Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <style>
+        .setup-card {
+            background: #0d1710;
+            border: 2px solid #1f2d24;
+            border-radius: 14px;
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        .setup-card.locked {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .setup-card-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            letter-spacing: 2px;
+            color: #22c55e;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .setup-step-num {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: rgba(34,197,94,0.15);
+            border: 2px solid #22c55e44;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; color: #22c55e;
+        }
+        .toss-btn {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #1f2d24;
+            border-radius: 12px;
+            background: #15201a;
+            color: #6b7280;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .toss-btn:hover { border-color: #22c55e55; color: #22c55e; }
+        .toss-btn.selected-a { border-color: #22c55e; background: rgba(34,197,94,0.12); color: #22c55e; box-shadow: 0 0 16px rgba(34,197,94,0.2); }
+        .toss-btn.selected-b { border-color: #3b82f6; background: rgba(59,130,246,0.12); color: #60a5fa; box-shadow: 0 0 16px rgba(59,130,246,0.2); }
+        .bat-btn {
+            flex: 1;
+            padding: 24px;
+            border: 2px solid #1f2d24;
+            border-radius: 12px;
+            background: #15201a;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .bat-btn:hover { border-color: #f59e0b55; }
+        .bat-btn.selected { border-color: #f59e0b; background: rgba(245,158,11,0.1); box-shadow: 0 0 16px rgba(245,158,11,0.2); }
+        .bat-btn-icon { font-size: 32px; margin-bottom: 8px; }
+        .bat-btn-label { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: #f59e0b; }
+        .bat-btn-sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
+        .player-select-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .player-select-box label { display: block; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #4ade80; margin-bottom: 8px; font-weight: 600; }
+        select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2322c55e' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .overs-input { display: flex; gap: 8px; flex-wrap: wrap; }
+        .overs-option {
+            padding: 8px 16px;
+            border: 2px solid #1f2d24;
+            border-radius: 8px;
+            background: #15201a;
+            color: #6b7280;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .overs-option.selected { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,0.1); }
+        .prediction-box {
+            background: #0a1a0f;
+            border: 1px solid #1f3025;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .prob-bar-container { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-top: 12px; }
+        .prob-bar { height: 10px; border-radius: 5px; transition: width 0.8s ease; }
+        .prob-bar-a { background: linear-gradient(90deg, #15803d, #22c55e); }
+        .prob-bar-b { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+        .prob-vs { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #374151; }
+    </style>
+</head>
+<body>
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏏</div>
+            <div>
+                <div class="sidebar-brand-name">CRICKET</div>
+                <div class="sidebar-brand-sub">ADMIN PANEL</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin/" class="sidebar-link"><i class="fas fa-gauge-high"></i> Dashboard</a>
+            <a href="/admin/team-setup" class="sidebar-link"><i class="fas fa-users-gear"></i> Team Setup</a>
+            <a href="/admin/match-setup" class="sidebar-link active"><i class="fas fa-play-circle"></i> Start Match</a>
+            <div class="sidebar-divider"></div>
+            <a href="/" class="sidebar-link"><i class="fas fa-house"></i> View Site</a>
+            <a href="/auth/logout" class="sidebar-link danger"><i class="fas fa-right-from-bracket"></i> Logout</a>
+        </nav>
+    </aside>
+
+    <div class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <div class="admin-page-title">MATCH SETUP</div>
+                <div style="font-size:12px; color:var(--text-muted);">Configure toss, batting order & opening players</div>
+            </div>
+            <a href="/admin/team-setup" class="btn btn-secondary btn-sm">← Back to Teams</a>
+        </header>
+
+        <!-- No teams warning -->
+        <div id="noTeamsWarning" class="alert alert-warning" style="display:none;">
+            <i class="fas fa-triangle-exclamation"></i>
+            Teams not selected yet.
+            <a href="/admin/team-setup" class="btn btn-gold btn-sm" style="margin-left:12px;">Go to Team Setup →</a>
+        </div>
+
+        <div id="setupContent">
+            <!-- Team Summary -->
+            <div id="teamSummary" class="grid-2 gap-20" style="margin-bottom:20px;"></div>
+
+            <!-- Step 1: Overs -->
+            <div class="setup-card" id="stepOvers">
+                <div class="setup-card-title">
+                    <div class="setup-step-num">1</div>
+                    SET MATCH OVERS
+                </div>
+                <div class="overs-input" id="oversOptions">
+                    <div class="overs-option selected" onclick="selectOvers(5, this)">5 Overs</div>
+                    <div class="overs-option" onclick="selectOvers(6, this)">6 Overs</div>
+                    <div class="overs-option" onclick="selectOvers(8, this)">8 Overs</div>
+                    <div class="overs-option" onclick="selectOvers(10, this)">10 Overs</div>
+                    <div class="overs-option" onclick="selectOvers(12, this)">12 Overs</div>
+                    <div class="overs-option" onclick="selectOvers(15, this)">15 Overs</div>
+                    <div class="overs-option" onclick="selectOvers(20, this)">20 Overs</div>
+                </div>
+            </div>
+
+            <!-- Step 2: Toss -->
+            <div class="setup-card" id="stepToss">
+                <div class="setup-card-title">
+                    <div class="setup-step-num">2</div>
+                    TOSS RESULT — WHO WON THE TOSS?
+                </div>
+                <div class="flex gap-16">
+                    <button class="toss-btn" onclick="selectToss('A', this)" id="tossA">
+                        🟢 TEAM A WINS TOSS
+                    </button>
+                    <button class="toss-btn" onclick="selectToss('B', this)" id="tossB">
+                        🔵 TEAM B WINS TOSS
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Batting First -->
+            <div class="setup-card locked" id="stepBat">
+                <div class="setup-card-title">
+                    <div class="setup-step-num">3</div>
+                    WHO BATS FIRST?
+                </div>
+                <div class="flex gap-16">
+                    <div class="bat-btn" onclick="selectBatting('A', this)" id="batA">
+                        <div class="bat-btn-icon">🏏</div>
+                        <div class="bat-btn-label">TEAM A BATS</div>
+                        <div class="bat-btn-sub">Team A opens the innings</div>
+                    </div>
+                    <div class="bat-btn" onclick="selectBatting('B', this)" id="batB">
+                        <div class="bat-btn-icon">🏏</div>
+                        <div class="bat-btn-label">TEAM B BATS</div>
+                        <div class="bat-btn-sub">Team B opens the innings</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Opening Players -->
+            <div class="setup-card locked" id="stepPlayers">
+                <div class="setup-card-title">
+                    <div class="setup-step-num">4</div>
+                    SELECT OPENING PLAYERS
+                </div>
+                <div class="player-select-row">
+                    <div class="player-select-box">
+                        <label>⚡ Striker (Facing Ball)</label>
+                        <select class="form-control" id="strikerSelect">
+                            <option value="">Select Striker...</option>
+                        </select>
+                    </div>
+                    <div class="player-select-box">
+                        <label>🏃 Non-Striker</label>
+                        <select class="form-control" id="nonStrikerSelect">
+                            <option value="">Select Non-Striker...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="player-select-row mt-16">
+                    <div class="player-select-box">
+                        <label>🎯 Opening Bowler</label>
+                        <select class="form-control" id="bowlerSelect">
+                            <option value="">Select Bowler...</option>
+                        </select>
+                    </div>
+                    <div class="player-select-box" style="display:flex; align-items:flex-end;">
+                        <div style="font-size:12px; color:var(--text-muted); padding-bottom:12px;">
+                            <i class="fas fa-info-circle" style="color:var(--accent-gold);"></i>
+                            Max 2 overs per bowler per match
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ML Prediction -->
+            <div class="prediction-box" id="predictionBox" style="display:none;">
+                <div style="font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; color:#f59e0b; margin-bottom:4px;">
+                    🤖 ML WIN PREDICTION
+                </div>
+                <div style="font-size:12px; color:var(--text-muted);">Based on player career performance & historical data</div>
+                <div class="prob-bar-container">
+                    <div>
+                        <div style="font-size:12px; color:#22c55e; font-weight:600; margin-bottom:6px;">🟢 TEAM A</div>
+                        <div style="background:#1f2d24; border-radius:5px; overflow:hidden;">
+                            <div class="prob-bar prob-bar-a" id="probBarA" style="width:50%;"></div>
+                        </div>
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#22c55e; margin-top:4px;" id="probTextA">50%</div>
+                    </div>
+                    <div class="prob-vs">VS</div>
+                    <div style="text-align:right;">
+                        <div style="font-size:12px; color:#60a5fa; font-weight:600; margin-bottom:6px;">TEAM B 🔵</div>
+                        <div style="background:#1f2d24; border-radius:5px; overflow:hidden;">
+                            <div class="prob-bar prob-bar-b" id="probBarB" style="width:50%;"></div>
+                        </div>
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#60a5fa; margin-top:4px;" id="probTextB">50%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Start Match Button -->
+            <div class="setup-card locked" id="stepStart" style="text-align:center; padding:32px;">
+                <div style="font-size:48px; margin-bottom:12px;">🏏</div>
+                <div style="font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:#f0fdf4; margin-bottom:8px;">READY TO START!</div>
+                <div style="color:#6b7280; font-size:14px; margin-bottom:24px;">All setup complete. Click below to begin live scoring.</div>
+                <button class="btn btn-primary" style="padding:16px 48px; font-size:16px; letter-spacing:2px;" onclick="startMatch()" id="startMatchBtn">
+                    <i class="fas fa-play"></i> START MATCH NOW
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script>
+let dayId = null;
+let teamAId = null, teamBId = null;
+let teamAPlayers = [], teamBPlayers = [];
+let tossWinner = null;
+let battingFirst = null;
+let totalOvers = 5;
+let matchId = null;
+
+async function init() {
+    const resp = await fetch('/api/matches/today');
+    const data = await resp.json();
+
+    if (!data.day) {
+        showToast('Start today first from Dashboard!', 'error');
+        setTimeout(() => location.href = '/admin/', 2000);
+        return;
+    }
+
+    dayId = data.day.id;
+
+    if (!data.teams || !data.teams.A || !data.teams.B ||
+        data.teams.A.players.length === 0 || data.teams.B.players.length === 0) {
+        document.getElementById('noTeamsWarning').style.display = 'block';
+        return;
+    }
+
+    teamAId = data.teams.A.id;
+    teamBId = data.teams.B.id;
+    teamAPlayers = data.teams.A.players;
+    teamBPlayers = data.teams.B.players;
+
+    renderTeamSummary();
+}
+
+function renderTeamSummary() {
+    const el = document.getElementById('teamSummary');
+    el.innerHTML = `
+        <div style="background:#0d2016; border:2px solid #22c55e44; border-radius:12px; padding:16px;">
+            <div style="font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; color:#22c55e; margin-bottom:10px;">🟢 TEAM A (${teamAPlayers.length} players)</div>
+            <div>${teamAPlayers.map(p => `<span style="display:inline-block; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); border-radius:20px; padding:3px 10px; font-size:12px; color:#86efac; margin:2px;">${p.name}</span>`).join('')}</div>
+        </div>
+        <div style="background:#0d1420; border:2px solid #3b82f644; border-radius:12px; padding:16px;">
+            <div style="font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; color:#60a5fa; margin-bottom:10px;">🔵 TEAM B (${teamBPlayers.length} players)</div>
+            <div>${teamBPlayers.map(p => `<span style="display:inline-block; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); border-radius:20px; padding:3px 10px; font-size:12px; color:#93c5fd; margin:2px;">${p.name}</span>`).join('')}</div>
+        </div>
+    `;
+}
+
+function selectOvers(n, el) {
+    totalOvers = n;
+    document.querySelectorAll('.overs-option').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+function selectToss(team, el) {
+    tossWinner = team;
+    document.getElementById('tossA').className = 'toss-btn';
+    document.getElementById('tossB').className = 'toss-btn';
+    el.className = `toss-btn selected-${team.toLowerCase()}`;
+    // Unlock batting
+    document.getElementById('stepBat').classList.remove('locked');
+}
+
+function selectBatting(team, el) {
+    battingFirst = team;
+    document.getElementById('batA').classList.remove('selected');
+    document.getElementById('batB').classList.remove('selected');
+    el.classList.add('selected');
+
+    // Populate player dropdowns
+    const battingPlayers = team === 'A' ? teamAPlayers : teamBPlayers;
+    const bowlingPlayers = team === 'A' ? teamBPlayers : teamAPlayers;
+
+    populateSelect('strikerSelect', battingPlayers, 'Select Striker...');
+    populateSelect('nonStrikerSelect', battingPlayers, 'Select Non-Striker...');
+    populateSelect('bowlerSelect', bowlingPlayers, 'Select Opening Bowler...');
+
+    document.getElementById('stepPlayers').classList.remove('locked');
+
+    // Show ML prediction
+    showPrediction();
+}
+
+function populateSelect(id, players, placeholder) {
+    const sel = document.getElementById(id);
+    sel.innerHTML = `<option value="">${placeholder}</option>` +
+        players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+}
+
+async function showPrediction() {
+    const box = document.getElementById('predictionBox');
+    box.style.display = 'block';
+
+    try {
+        // Create match first to get prediction
+        const resp = await fetch('/api/matches/create-match', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+                day_id: dayId,
+                toss_winner: tossWinner,
+                batting_first: battingFirst,
+                total_overs: totalOvers
+            })
+        });
+        const data = await resp.json();
+        if (data.match_id) {
+            matchId = data.match_id;
+            const pa = data.predictions.team_a;
+            const pb = data.predictions.team_b;
+            document.getElementById('probBarA').style.width = pa + '%';
+            document.getElementById('probBarB').style.width = pb + '%';
+            document.getElementById('probTextA').textContent = pa + '%';
+            document.getElementById('probTextB').textContent = pb + '%';
+            document.getElementById('stepStart').classList.remove('locked');
+        }
+    } catch(e) {
+        document.getElementById('probTextA').textContent = '50%';
+        document.getElementById('probTextB').textContent = '50%';
+        document.getElementById('stepStart').classList.remove('locked');
+    }
+}
+
+async function startMatch() {
+    const strikerId = document.getElementById('strikerSelect').value;
+    const nonStrikerId = document.getElementById('nonStrikerSelect').value;
+    const bowlerId = document.getElementById('bowlerSelect').value;
+
+    if (!strikerId) return showToast('Select Striker!', 'error');
+    if (!nonStrikerId) return showToast('Select Non-Striker!', 'error');
+    if (strikerId === nonStrikerId) return showToast('Striker and Non-Striker must be different!', 'error');
+    if (!bowlerId) return showToast('Select Opening Bowler!', 'error');
+    if (!matchId) return showToast('Match not created yet!', 'error');
+
+    const btn = document.getElementById('startMatchBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Starting...';
+
+    const resp = await fetch('/api/scoring/start-innings', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+            match_id: matchId,
+            innings_number: 1,
+            striker_id: parseInt(strikerId),
+            non_striker_id: parseInt(nonStrikerId),
+            bowler_id: parseInt(bowlerId)
+        })
+    });
+    const data = await resp.json();
+
+    if (data.success) {
+        showToast('✅ Match started! Opening live scorer...', 'success');
+        setTimeout(() => location.href = `/admin/scoring/${matchId}`, 1200);
+    } else {
+        showToast(data.error || 'Error starting match', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-play"></i> START MATCH NOW';
+    }
+}
+
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast toast-${type}`;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3500);
+}
+
+init();
+</script>
+</body>
+</html>

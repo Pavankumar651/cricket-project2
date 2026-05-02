@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Setup | Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <style>
+        .player-select-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .player-pill {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 8px;
+            border-radius: 10px;
+            border: 2px solid #1f2d24;
+            background: #0d1710;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+        }
+        .player-pill:hover { border-color: #22c55e55; background: #15201a; }
+        .player-pill.selected-a {
+            border-color: #22c55e;
+            background: rgba(34,197,94,0.12);
+            box-shadow: 0 0 12px rgba(34,197,94,0.2);
+        }
+        .player-pill.selected-b {
+            border-color: #3b82f6;
+            background: rgba(59,130,246,0.12);
+            box-shadow: 0 0 12px rgba(59,130,246,0.2);
+        }
+        .player-pill.disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .player-pill-avatar {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: #1f2d24;
+            border: 2px solid #2d3d30;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 18px;
+            color: #22c55e;
+        }
+        .player-pill.selected-a .player-pill-avatar { background: rgba(34,197,94,0.2); border-color: #22c55e; }
+        .player-pill.selected-b .player-pill-avatar { background: rgba(59,130,246,0.2); border-color: #3b82f6; color: #60a5fa; }
+        .player-pill-name { font-size: 12px; font-weight: 600; text-align: center; color: #d1fae5; line-height: 1.2; }
+        .player-pill-badge {
+            position: absolute; top: -6px; right: -6px;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700;
+            display: none;
+        }
+        .player-pill.selected-a .player-pill-badge { display: flex; background: #22c55e; color: #0a0f0d; }
+        .player-pill.selected-b .player-pill-badge { display: flex; background: #3b82f6; color: white; }
+
+        .team-panel {
+            background: #0d1710;
+            border: 2px solid #1f2d24;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 200px;
+        }
+        .team-panel-a { border-color: #22c55e44; }
+        .team-panel-b { border-color: #3b82f644; }
+        .team-panel-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .team-panel-a .team-panel-title { color: #22c55e; }
+        .team-panel-b .team-panel-title { color: #60a5fa; }
+        .selected-player-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 3px;
+        }
+        .chip-a { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+        .chip-b { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; }
+        .count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .count-a { background: #22c55e; color: #0a0f0d; }
+        .count-b { background: #3b82f6; color: white; }
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 28px;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .step-num {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700;
+        }
+        .step.done .step-num { background: #22c55e; color: #0a0f0d; }
+        .step.active .step-num { background: #f59e0b; color: #0a0f0d; }
+        .step.pending .step-num { background: #1f2d24; color: #4b5563; }
+        .step.done { color: #22c55e; }
+        .step.active { color: #f59e0b; }
+        .step.pending { color: #4b5563; }
+        .step-line { flex: 1; height: 2px; background: #1f2d24; margin: 0 12px; min-width: 30px; }
+        .step-line.done { background: #22c55e; }
+    </style>
+</head>
+<body>
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏏</div>
+            <div>
+                <div class="sidebar-brand-name">CRICKET</div>
+                <div class="sidebar-brand-sub">ADMIN PANEL</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin/" class="sidebar-link"><i class="fas fa-gauge-high"></i> Dashboard</a>
+            <a href="/admin/team-setup" class="sidebar-link active"><i class="fas fa-users-gear"></i> Team Setup</a>
+            <a href="/admin/match-setup" class="sidebar-link"><i class="fas fa-play-circle"></i> Start Match</a>
+            <div class="sidebar-divider"></div>
+            <a href="/" class="sidebar-link"><i class="fas fa-house"></i> View Site</a>
+            <a href="/auth/logout" class="sidebar-link danger"><i class="fas fa-right-from-bracket"></i> Logout</a>
+        </nav>
+    </aside>
+
+    <div class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <div class="admin-page-title">TEAM SETUP</div>
+                <div style="font-size:12px; color:var(--text-muted);" id="dateDisplay"></div>
+            </div>
+            <div class="flex items-center gap-12">
+                <span id="dayStatus" class="badge badge-gold">Loading...</span>
+            </div>
+        </header>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step done" id="step1">
+                <div class="step-num"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                <span>Day Started</span>
+            </div>
+            <div class="step-line done"></div>
+            <div class="step active" id="step2">
+                <div class="step-num">2</div>
+                <span>Team Selection</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step pending" id="step3">
+                <div class="step-num">3</div>
+                <span>Toss & Match</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step pending" id="step4">
+                <div class="step-num">4</div>
+                <span>Live Scoring</span>
+            </div>
+        </div>
+
+        <!-- Day not started warning -->
+        <div id="noDayWarning" class="alert alert-warning" style="display:none;">
+            <i class="fas fa-triangle-exclamation"></i>
+            Today has not been started yet.
+            <button class="btn btn-gold btn-sm" style="margin-left:12px;" onclick="startDay()">Start Today First</button>
+        </div>
+
+        <!-- Instructions -->
+        <div class="alert alert-success mb-16">
+            <i class="fas fa-circle-info"></i>
+            <strong>How it works:</strong> Click player names to add to Team A (green). Then switch to Team B and click again. A player selected for one team will be locked out of the other. Minimum 5 players per team.
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="flex items-center gap-12 mb-16">
+            <span style="font-size:13px; font-weight:600; color:var(--text-muted);">Adding to:</span>
+            <div style="display:flex; border:2px solid #1f2d24; border-radius:8px; overflow:hidden;">
+                <button id="modeA" onclick="setMode('A')"
+                    style="padding:8px 20px; border:none; background:rgba(34,197,94,0.2); color:#22c55e; font-weight:700; font-size:13px; cursor:pointer; letter-spacing:1px;">
+                    ✅ TEAM A
+                </button>
+                <button id="modeB" onclick="setMode('B')"
+                    style="padding:8px 20px; border:none; background:#0d1710; color:#4b5563; font-weight:700; font-size:13px; cursor:pointer; letter-spacing:1px;">
+                    🔵 TEAM B
+                </button>
+            </div>
+            <span style="font-size:12px; color:var(--text-muted);">Click a player card to add/remove from selected team</span>
+        </div>
+
+        <!-- Main Grid: Player Selector + Team Panels -->
+        <div style="display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start;">
+
+            <!-- All Players -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">👥 SELECT PLAYERS</div>
+                    <div class="flex gap-8">
+                        <span class="badge badge-green" id="countA">Team A: 0</span>
+                        <span class="badge badge-blue" id="countB">Team B: 0</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="player-select-grid" id="playerGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Panels (right side) -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
+
+                <!-- Team A Panel -->
+                <div class="team-panel team-panel-a">
+                    <div class="team-panel-title">
+                        <span>🟢 TEAM A</span>
+                        <span class="count-badge count-a" id="teamACount">0</span>
+                    </div>
+                    <div id="teamAPlayers" style="min-height:60px;">
+                        <div style="color:#374151; font-size:13px; text-align:center; padding:12px;">No players selected</div>
+                    </div>
+                </div>
+
+                <!-- Team B Panel -->
+                <div class="team-panel team-panel-b">
+                    <div class="team-panel-title">
+                        <span>🔵 TEAM B</span>
+                        <span class="count-badge count-b" id="teamBCount">0</span>
+                    </div>
+                    <div id="teamBPlayers" style="min-height:60px;">
+                        <div style="color:#374151; font-size:13px; text-align:center; padding:12px;">No players selected</div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <button class="btn btn-primary w-full" onclick="saveTeams()" id="saveBtn" style="padding:14px;">
+                    <i class="fas fa-check-circle"></i> SAVE TEAMS & CONTINUE →
+                </button>
+                <button class="btn btn-secondary w-full btn-sm" onclick="clearAll()">
+                    <i class="fas fa-rotate-left"></i> Reset All
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script>
+let dayId = null;
+let mode = 'A'; // current selection mode
+let teamA = []; // array of player ids
+let teamB = [];
+let allPlayers = [];
+
+document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-IN', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+});
+
+function setMode(m) {
+    mode = m;
+    document.getElementById('modeA').style.background = m === 'A' ? 'rgba(34,197,94,0.2)' : '#0d1710';
+    document.getElementById('modeA').style.color = m === 'A' ? '#22c55e' : '#4b5563';
+    document.getElementById('modeB').style.background = m === 'B' ? 'rgba(59,130,246,0.2)' : '#0d1710';
+    document.getElementById('modeB').style.color = m === 'B' ? '#60a5fa' : '#4b5563';
+}
+
+async function init() {
+    // Load today
+    const resp = await fetch('/api/matches/today');
+    const data = await resp.json();
+
+    if (!data.day) {
+        document.getElementById('noDayWarning').style.display = 'block';
+        document.getElementById('dayStatus').textContent = 'Day Not Started';
+        document.getElementById('dayStatus').className = 'badge badge-red';
+    } else {
+        dayId = data.day.id;
+        document.getElementById('dayStatus').textContent = '✅ Day Active';
+        document.getElementById('dayStatus').className = 'badge badge-green';
+
+        // Pre-load existing team selections
+        if (data.teams) {
+            if (data.teams.A) teamA = data.teams.A.players.map(p => p.id);
+            if (data.teams.B) teamB = data.teams.B.players.map(p => p.id);
+        }
+    }
+
+    // Load all players
+    const pResp = await fetch('/api/players/');
+    allPlayers = await pResp.json();
+    renderPlayers();
+    renderPanels();
+}
+
+function renderPlayers() {
+    const grid = document.getElementById('playerGrid');
+    grid.innerHTML = allPlayers.map(p => {
+        const inA = teamA.includes(p.id);
+        const inB = teamB.includes(p.id);
+        const disabled = (mode === 'A' && inB) || (mode === 'B' && inA);
+        const selClass = inA ? 'selected-a' : inB ? 'selected-b' : '';
+        const disClass = disabled ? 'disabled' : '';
+        const badgeText = inA ? 'A' : inB ? 'B' : '';
+        return `
+            <div class="player-pill ${selClass} ${disClass}" onclick="togglePlayer(${p.id})" id="pill-${p.id}">
+                <div class="player-pill-badge">${badgeText}</div>
+                <div class="player-pill-avatar">${p.name[0]}</div>
+                <div class="player-pill-name">${p.name}</div>
+                ${inA ? '<div style="font-size:9px; color:#22c55e; letter-spacing:1px;">TEAM A</div>' :
+                  inB ? '<div style="font-size:9px; color:#60a5fa; letter-spacing:1px;">TEAM B</div>' :
+                        '<div style="font-size:9px; color:#374151; letter-spacing:1px;">AVAILABLE</div>'}
+            </div>
+        `;
+    }).join('');
+}
+
+function togglePlayer(pid) {
+    if (!dayId) return showToast('Start today first!', 'error');
+
+    if (mode === 'A') {
+        if (teamB.includes(pid)) return showToast('Player already in Team B!', 'error');
+        if (teamA.includes(pid)) {
+            teamA = teamA.filter(id => id !== pid);
+        } else {
+            teamA.push(pid);
+        }
+    } else {
+        if (teamA.includes(pid)) return showToast('Player already in Team A!', 'error');
+        if (teamB.includes(pid)) {
+            teamB = teamB.filter(id => id !== pid);
+        } else {
+            teamB.push(pid);
+        }
+    }
+    renderPlayers();
+    renderPanels();
+}
+
+function renderPanels() {
+    // Team A
+    document.getElementById('teamACount').textContent = teamA.length;
+    document.getElementById('countA').textContent = `Team A: ${teamA.length}`;
+    const aPanel = document.getElementById('teamAPlayers');
+    if (teamA.length === 0) {
+        aPanel.innerHTML = '<div style="color:#374151; font-size:13px; text-align:center; padding:12px;">No players selected</div>';
+    } else {
+        aPanel.innerHTML = teamA.map(id => {
+            const p = allPlayers.find(pl => pl.id === id);
+            return p ? `<span class="selected-player-chip chip-a">
+                <span style="font-size:16px;">${p.name[0]}</span> ${p.name}
+                <span onclick="removePlayer(${id},'A')" style="cursor:pointer; margin-left:2px; opacity:0.6;">✕</span>
+            </span>` : '';
+        }).join('');
+    }
+
+    // Team B
+    document.getElementById('teamBCount').textContent = teamB.length;
+    document.getElementById('countB').textContent = `Team B: ${teamB.length}`;
+    const bPanel = document.getElementById('teamBPlayers');
+    if (teamB.length === 0) {
+        bPanel.innerHTML = '<div style="color:#374151; font-size:13px; text-align:center; padding:12px;">No players selected</div>';
+    } else {
+        bPanel.innerHTML = teamB.map(id => {
+            const p = allPlayers.find(pl => pl.id === id);
+            return p ? `<span class="selected-player-chip chip-b">
+                <span style="font-size:16px;">${p.name[0]}</span> ${p.name}
+                <span onclick="removePlayer(${id},'B')" style="cursor:pointer; margin-left:2px; opacity:0.6;">✕</span>
+            </span>` : '';
+        }).join('');
+    }
+}
+
+function removePlayer(pid, team) {
+    if (team === 'A') teamA = teamA.filter(id => id !== pid);
+    else teamB = teamB.filter(id => id !== pid);
+    renderPlayers();
+    renderPanels();
+}
+
+function clearAll() {
+    teamA = []; teamB = [];
+    renderPlayers(); renderPanels();
+}
+
+async function saveTeams() {
+    if (!dayId) return showToast('Start today first!', 'error');
+    if (teamA.length < 2) return showToast('Team A needs at least 2 players!', 'error');
+    if (teamB.length < 2) return showToast('Team B needs at least 2 players!', 'error');
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+
+    try {
+        const [rA, rB] = await Promise.all([
+            fetch('/api/matches/select-team', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ day_id: dayId, team_label: 'A', player_ids: teamA })
+            }),
+            fetch('/api/matches/select-team', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ day_id: dayId, team_label: 'B', player_ids: teamB })
+            })
+        ]);
+
+        const dA = await rA.json();
+        const dB = await rB.json();
+
+        if (dA.success && dB.success) {
+            showToast('✅ Teams saved! Redirecting to match setup...', 'success');
+            setTimeout(() => location.href = '/admin/match-setup', 1500);
+        } else {
+            showToast(dA.error || dB.error || 'Error saving teams', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> SAVE TEAMS & CONTINUE →';
+        }
+    } catch(e) {
+        showToast('Network error', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> SAVE TEAMS & CONTINUE →';
+    }
+}
+
+async function startDay() {
+    const resp = await fetch('/api/matches/start-day', {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({})
+    });
+    const data = await resp.json();
+    dayId = data.day_id || data.id;
+    document.getElementById('noDayWarning').style.display = 'none';
+    document.getElementById('dayStatus').textContent = '✅ Day Active';
+    document.getElementById('dayStatus').className = 'badge badge-green';
+    showToast('✅ Day started!', 'success');
+}
+
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast toast-${type}`;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3500);
+}
+
+init();
+</script>
+</body>
+</html>

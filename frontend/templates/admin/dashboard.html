@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Ground Cricket</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+
+<!-- Admin Sidebar -->
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏏</div>
+            <div>
+                <div class="sidebar-brand-name">CRICKET</div>
+                <div class="sidebar-brand-sub">ADMIN PANEL</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/admin/" class="sidebar-link active">
+                <i class="fas fa-gauge-high"></i> Dashboard
+            </a>
+            <a href="/admin/team-setup" class="sidebar-link">
+                <i class="fas fa-users-gear"></i> Team Setup
+            </a>
+            <a href="/admin/match-setup" class="sidebar-link">
+                <i class="fas fa-play-circle"></i> Start Match
+            </a>
+            <div class="sidebar-divider"></div>
+            <a href="/" class="sidebar-link">
+                <i class="fas fa-house"></i> View Site
+            </a>
+            <a href="/auth/logout" class="sidebar-link danger">
+                <i class="fas fa-right-from-bracket"></i> Logout
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="admin-main">
+        <!-- Top Bar -->
+        <header class="admin-topbar">
+            <div>
+                <div class="admin-page-title">DASHBOARD</div>
+                <div id="todayDate" style="font-size:12px; color:var(--text-muted);"></div>
+            </div>
+            <div class="flex items-center gap-12">
+                <button class="btn btn-primary" onclick="startDay()" id="startDayBtn">
+                    <i class="fas fa-sun"></i> Start Today
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="endDay()" id="endDayBtn" style="display:none;">
+                    <i class="fas fa-moon"></i> End Day
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Row -->
+        <div class="grid-4 gap-16 mb-24" id="dashStats">
+            <div class="stat-card">
+                <div class="stat-icon" style="color:var(--accent-green);">🏏</div>
+                <div class="stat-value" id="statMatches">0</div>
+                <div class="stat-label">Today's Matches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="color:var(--accent-gold);">🎯</div>
+                <div class="stat-value" id="statLive">—</div>
+                <div class="stat-label">Live Match</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="color:#a78bfa;">👥</div>
+                <div class="stat-value">15</div>
+                <div class="stat-label">Total Players</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="color:var(--accent-gold);">⭐</div>
+                <div class="stat-value" id="statMvp">—</div>
+                <div class="stat-label">MVP Today</div>
+            </div>
+        </div>
+
+        <!-- Two Columns -->
+        <div class="grid-2 gap-20">
+
+            <!-- Today's Matches -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📋 TODAY'S MATCHES</div>
+                    <a href="/admin/match-setup" class="btn btn-primary btn-sm">+ New Match</a>
+                </div>
+                <div class="card-body" style="padding:0;" id="todayMatchList">
+                    <div style="text-align:center; padding:32px; color:var(--text-muted);">
+                        <div style="font-size:32px; margin-bottom:8px;">📅</div>
+                        Start today to create matches
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">⚡ QUICK ACTIONS</div>
+                </div>
+                <div class="card-body">
+                    <div style="display:grid; gap:12px;">
+                        <a href="/admin/team-setup" class="action-card">
+                            <div class="action-icon">👥</div>
+                            <div>
+                                <div class="action-title">TEAM SETUP</div>
+                                <div class="action-desc">Select players for Team A & Team B</div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color:var(--text-muted); margin-left:auto;"></i>
+                        </a>
+                        <a href="/admin/match-setup" class="action-card">
+                            <div class="action-icon">🏏</div>
+                            <div>
+                                <div class="action-title">START MATCH</div>
+                                <div class="action-desc">Toss, batting selection, begin scoring</div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color:var(--text-muted); margin-left:auto;"></i>
+                        </a>
+                        <a href="/players" class="action-card">
+                            <div class="action-icon">📊</div>
+                            <div>
+                                <div class="action-title">PLAYER STATS</div>
+                                <div class="action-desc">View all player career analytics</div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color:var(--text-muted); margin-left:auto;"></i>
+                        </a>
+                        <a href="/leaderboard" class="action-card">
+                            <div class="action-icon">🏆</div>
+                            <div>
+                                <div class="action-title">LEADERBOARD</div>
+                                <div class="action-desc">Weekly & Monthly rankings</div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color:var(--text-muted); margin-left:auto;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- All Players Table -->
+        <div class="card mt-20">
+            <div class="card-header">
+                <div class="card-title">👥 ALL PLAYERS</div>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <table class="data-table" id="adminPlayerTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Name</th><th>Role</th>
+                            <th>Matches</th><th>Runs</th><th>Wickets</th><th>Avg</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Alert Toast -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script>
+let dayId = null;
+
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+});
+
+async function loadDashboard() {
+    try {
+        const resp = await fetch('/api/matches/today');
+        const data = await resp.json();
+
+        if (data.day) {
+            dayId = data.day.id;
+            document.getElementById('startDayBtn').style.display = 'none';
+            document.getElementById('endDayBtn').style.display = '';
+
+            const matches = data.matches || [];
+            document.getElementById('statMatches').textContent = matches.length;
+
+            const live = matches.find(m => ['live','innings2'].includes(m.status));
+            document.getElementById('statLive').textContent = live ? `M${live.match_number}` : 'None';
+
+            const matchList = document.getElementById('todayMatchList');
+            if (matches.length === 0) {
+                matchList.innerHTML = `<div style="text-align:center; padding:32px; color:var(--text-muted);">No matches yet. <a href="/admin/match-setup" style="color:var(--accent-green);">Start one →</a></div>`;
+            } else {
+                matchList.innerHTML = matches.map(m => `
+                    <div class="flex items-center justify-between" style="padding:14px 20px; border-bottom:1px solid var(--border);">
+                        <div>
+                            <span style="font-family:var(--font-display); font-size:16px; letter-spacing:1px;">MATCH #${m.match_number}</span>
+                            <span class="badge ${m.status === 'live' || m.status === 'innings2' ? 'badge-live' : m.status === 'completed' ? 'badge-green' : 'badge-gold'}" style="margin-left:8px;">
+                                ${m.status.toUpperCase()}
+                            </span>
+                        </div>
+                        ${(m.status === 'live' || m.status === 'innings2')
+                            ? `<a href="/admin/scoring/${m.id}" class="btn btn-primary btn-sm">▶ Score</a>`
+                            : m.status === 'completed'
+                            ? `<span style="color:var(--accent-green); font-size:13px;">Team ${m.winner} Won</span>`
+                            : `<a href="/admin/scoring/${m.id}" class="btn btn-secondary btn-sm">Setup</a>`
+                        }
+                    </div>
+                `).join('');
+            }
+        }
+    } catch(e) { console.error(e); }
+
+    loadPlayers();
+}
+
+async function loadPlayers() {
+    const resp = await fetch('/api/players/');
+    const players = await resp.json();
+    const tbody = document.querySelector('#adminPlayerTable tbody');
+    tbody.innerHTML = players.map(p => `
+        <tr>
+            <td style="font-family:var(--font-mono); color:var(--accent-green);">#${p.id}</td>
+            <td style="font-weight:700;">${p.name}</td>
+            <td><span class="badge badge-green" style="font-size:10px;">${p.role}</span></td>
+            <td>${p.career?.matches || 0}</td>
+            <td class="highlight">${p.career?.runs || 0}</td>
+            <td style="color:#a78bfa; font-weight:700;">${p.career?.wickets || 0}</td>
+            <td>${p.career?.avg || 0}</td>
+            <td><a href="/player/${p.id}" class="btn btn-secondary btn-sm">View</a></td>
+        </tr>
+    `).join('');
+}
+
+async function startDay() {
+    const resp = await fetch('/api/matches/start-day', { method: 'POST',
+        headers: {'Content-Type': 'application/json'}, body: JSON.stringify({}) });
+    const data = await resp.json();
+    if (data.success || data.day_id) {
+        dayId = data.day_id;
+        showToast('✅ Today started! Go to Team Setup → Start Match', 'success');
+        setTimeout(() => loadDashboard(), 500);
+    } else {
+        showToast(data.error || 'Error starting day', 'error');
+        if (data.day_id) { dayId = data.day_id; loadDashboard(); }
+    }
+}
+
+async function endDay() {
+    if (!dayId) return showToast('No active day', 'error');
+    if (!confirm('End today\'s session?')) return;
+    const resp = await fetch('/api/matches/end-day', { method: 'POST',
+        headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ day_id: dayId }) });
+    const data = await resp.json();
+    if (data.success) {
+        showToast(`✅ Day ended! MVP: ${data.mvp?.name || '—'}`, 'success');
+    } else {
+        showToast(data.error || 'Error', 'error');
+    }
+}
+
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast toast-${type}`;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3500);
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

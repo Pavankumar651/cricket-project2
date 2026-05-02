@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-title">LEADER<span>BOARD</span></div>
+        <div class="page-subtitle">Weekly & Monthly Rankings</div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex; gap:8px; margin-bottom:24px;">
+        <button class="btn btn-primary" onclick="showTab('weekly')"   id="tab-weekly">Weekly</button>
+        <button class="btn btn-secondary" onclick="showTab('monthly')" id="tab-monthly">Monthly</button>
+        <button class="btn btn-secondary" onclick="showTab('alltime')" id="tab-alltime">All Time</button>
+    </div>
+
+    <!-- Weekly -->
+    <div id="weekly">
+        <div class="grid-2 gap-20">
+            <div class="card">
+                <div class="card-header"><div class="card-title">🟠 ORANGE CAP — WEEKLY</div></div>
+                <div class="card-body" style="padding:0;">
+                    <table class="data-table" id="weeklyBat">
+                        <thead><tr><th>#</th><th>Player</th><th>Runs</th><th>Innings</th></tr></thead>
+                        <tbody><tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><div class="card-title">🟣 PURPLE CAP — WEEKLY</div></div>
+                <div class="card-body" style="padding:0;">
+                    <table class="data-table" id="weeklyBowl">
+                        <thead><tr><th>#</th><th>Player</th><th>Wickets</th><th>Innings</th></tr></thead>
+                        <tbody><tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly -->
+    <div id="monthly" style="display:none;">
+        <div class="grid-2 gap-20">
+            <div class="card">
+                <div class="card-header"><div class="card-title">🟠 ORANGE CAP — MONTHLY</div></div>
+                <div class="card-body" style="padding:0;">
+                    <table class="data-table" id="monthlyBat">
+                        <thead><tr><th>#</th><th>Player</th><th>Runs</th><th>Innings</th></tr></thead>
+                        <tbody><tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><div class="card-title">⭐ MVP — MONTHLY</div></div>
+                <div class="card-body" style="padding:0;">
+                    <table class="data-table" id="monthlyMvp">
+                        <thead><tr><th>#</th><th>Player</th><th>Runs</th><th>Wickets</th><th>MVP</th></tr></thead>
+                        <tbody><tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Time -->
+    <div id="alltime" style="display:none;">
+        <div class="grid-2 gap-20">
+            <div class="card">
+                <div class="card-header"><div class="card-title">🟠 ORANGE CAP — ALL TIME</div></div>
+                <div class="card-body" style="padding:0;">
+                    <table class="data-table" id="allBat">
+                        <thead><tr><th>#</th><th>Player</th><th>Runs</th><th>HS</th><th>Matches</th></tr></thead>
+                        <tbody><tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><div class="card-title">🟣 PURPLE CAP — ALL TIME</div></div>
+                <div class="card-body" style="padding:0;">
+                    <table class="data-table" id="allBowl">
+                        <thead><tr><th>#</th><th>Player</th><th>Wkts</th><th>Best</th><th>Matches</th></tr></thead>
+                        <tbody><tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(name) {
+    ['weekly','monthly','alltime'].forEach(t => {
+        document.getElementById(t).style.display = t === name ? 'block' : 'none';
+        document.getElementById(`tab-${t}`).className = t === name ? 'btn btn-primary' : 'btn btn-secondary';
+    });
+}
+
+function makeRows(data, cols) {
+    if (!data.length) return `<tr><td colspan="${cols}" style="text-align:center; padding:20px; color:var(--text-muted);">No data yet</td></tr>`;
+    return data.map((r, i) => `
+        <tr onclick="location.href='/player/${r.id}'" style="cursor:pointer;">
+            <td><span class="highlight">#${i+1}</span></td>
+            <td style="font-weight:600;">${r.name}</td>
+            ${cols === 4 && r.weekly_runs !== undefined
+                ? `<td class="highlight">${r.weekly_runs || 0}</td><td>${r.innings_played || 0}</td>`
+                : cols === 4 && r.weekly_wickets !== undefined
+                ? `<td class="highlight" style="color:#a78bfa;">${r.weekly_wickets || 0}</td><td>${r.innings_played || 0}</td>`
+                : cols === 5 && r.monthly_runs !== undefined
+                ? `<td class="highlight">${r.monthly_runs || 0}</td><td>${r.monthly_wickets || 0}</td><td class="highlight" style="color:var(--accent-gold);">${r.mvp_awards || 0}</td>`
+                : cols === 5 && r.runs !== undefined
+                ? `<td class="highlight">${r.runs}</td><td style="color:var(--accent-gold);">${r.highest}</td><td>${r.matches}</td>`
+                : `<td class="highlight" style="color:#a78bfa;">${r.wickets}</td><td>${r.best}</td><td>${r.matches}</td>`
+            }
+        </tr>
+    `).join('');
+}
+
+async function loadAll() {
+    const [weekly, monthly, oc, pc] = await Promise.all([
+        fetch('/api/players/leaderboard/weekly').then(r => r.json()),
+        fetch('/api/players/leaderboard/monthly').then(r => r.json()),
+        fetch('/api/analytics/orange-cap').then(r => r.json()),
+        fetch('/api/analytics/purple-cap').then(r => r.json()),
+    ]);
+
+    document.querySelector('#weeklyBat tbody').innerHTML = makeRows(weekly.sort((a,b)=>(b.weekly_runs||0)-(a.weekly_runs||0)), 4);
+    document.querySelector('#weeklyBowl tbody').innerHTML = makeRows(
+        weekly.map(r => ({...r})).sort((a,b)=>(b.weekly_wickets||0)-(a.weekly_wickets||0)), 4
+    );
+    document.querySelector('#monthlyBat tbody').innerHTML = makeRows(monthly, 4);
+    document.querySelector('#monthlyMvp tbody').innerHTML = makeRows(monthly, 5);
+    document.querySelector('#allBat tbody').innerHTML = makeRows(oc, 5);
+    document.querySelector('#allBowl tbody').innerHTML = makeRows(pc, 5);
+}
+
+loadAll();
+</script>
+{% endblock %}

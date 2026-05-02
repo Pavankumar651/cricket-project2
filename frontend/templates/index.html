@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Hero Section -->
+    <div class="page-header flex items-center justify-between" style="flex-wrap:wrap; gap:16px;">
+        <div>
+            <div class="page-title">GROUND <span>CRICKET</span></div>
+            <div class="page-subtitle">Daily Match Analytics & Scoring System</div>
+        </div>
+        <div id="dateDisplay" style="font-family:var(--font-mono); color:var(--accent-green); font-size:14px;"></div>
+    </div>
+
+    <!-- Live Scorecard -->
+    <div id="liveSection">
+        <div class="live-score-banner" id="liveBanner" style="display:none;">
+            <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+            <div class="grid-2" style="gap:32px; align-items:center;">
+                <div>
+                    <div id="liveTeamName" style="font-size:12px; letter-spacing:2px; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;"></div>
+                    <div id="liveScore" class="score-display">--/--</div>
+                    <div id="liveOvers" class="score-overs">(0.0 overs)</div>
+                    <div id="overBalls" class="over-balls mt-8"></div>
+                </div>
+                <div class="score-meta">
+                    <div class="score-meta-item">
+                        <label>Striker</label>
+                        <span id="liveStriker">—</span>
+                    </div>
+                    <div class="score-meta-item">
+                        <label>Non-Striker</label>
+                        <span id="liveNonStriker">—</span>
+                    </div>
+                    <div class="score-meta-item">
+                        <label>Bowler</label>
+                        <span id="liveBowler">—</span>
+                    </div>
+                    <div class="score-meta-item">
+                        <label>Run Rate</label>
+                        <span id="liveCRR">—</span>
+                    </div>
+                    <div class="score-meta-item">
+                        <label>Extras</label>
+                        <span id="liveExtras">0</span>
+                    </div>
+                    <div id="targetSection" class="score-meta-item" style="display:none;">
+                        <label>Need</label>
+                        <span id="liveTarget">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="noLiveMatch" class="card text-center" style="padding:40px;">
+            <div style="font-size:48px; margin-bottom:12px;">🏏</div>
+            <div style="font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-muted); margin-bottom:8px;">NO LIVE MATCH</div>
+            <div style="color:#4b5563; font-size:14px;">Matches will appear here when admin starts scoring</div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid-4 mt-32" id="statsGrid"></div>
+
+    <!-- Quick Leaderboards + Players -->
+    <div class="grid-2 mt-32" style="align-items:start;">
+
+        <!-- Orange Cap -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🟠 ORANGE CAP</div>
+                <a href="/leaderboard" class="btn btn-secondary btn-sm">Full Board</a>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <table class="data-table" id="orangeCapTable">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Player</th><th>Runs</th><th>Matches</th><th>HS</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Purple Cap -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🟣 PURPLE CAP</div>
+                <a href="/leaderboard" class="btn btn-secondary btn-sm">Full Board</a>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <table class="data-table" id="purpleCapTable">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Player</th><th>Wkts</th><th>Matches</th><th>Best</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Players -->
+    <div class="mt-32">
+        <div class="section-header">
+            <div class="section-title">ALL PLAYERS</div>
+            <a href="/players" class="btn btn-secondary">View All →</a>
+        </div>
+        <div class="players-grid" id="playersGrid">
+            <!-- Populated by JS -->
+            {% for i in range(6) %}
+            <div class="card skeleton" style="height:180px;"></div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const API = '';
+
+// Date
+document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+});
+
+// Load Live Match
+async function loadLiveMatch() {
+    try {
+        const resp = await fetch(`${API}/api/scoring/scorecard/live`).catch(() => null);
+        // Try today's matches
+        const todayResp = await fetch(`${API}/api/matches/today`);
+        const today = await todayResp.json();
+
+        const liveMatch = today.matches?.find(m => m.status === 'live' || m.status === 'innings2');
+        if (liveMatch) {
+            document.getElementById('noLiveMatch').style.display = 'none';
+            document.getElementById('liveBanner').style.display = 'block';
+            const sc = await fetch(`${API}/api/scoring/scorecard/${liveMatch.id}`);
+            if (sc.ok) {
+                const data = await sc.json();
+                updateLiveDisplay(data, liveMatch);
+            }
+        }
+    } catch(e) { console.log('No live match'); }
+}
+
+function updateLiveDisplay(data, match) {
+    document.getElementById('liveScore').textContent = `${data.total_runs}/${data.total_wickets}`;
+    document.getElementById('liveOvers').textContent = `(${data.overs_display} overs)`;
+    document.getElementById('liveStriker').textContent = data.striker?.name || '—';
+    document.getElementById('liveNonStriker').textContent = data.non_striker?.name || '—';
+    document.getElementById('liveBowler').textContent = data.current_bowler?.name || '—';
+    document.getElementById('liveCRR').textContent = data.current_run_rate || '—';
+    document.getElementById('liveExtras').textContent = data.total_extras || 0;
+
+    // Over balls
+    const ob = document.getElementById('overBalls');
+    ob.innerHTML = data.current_over_balls?.map(b => {
+        let cls = 'ball-dot';
+        if (b === 'W') cls = 'ball-wicket';
+        else if (b === '•') cls = 'ball-dot';
+        else if (b.startsWith('Wd')) cls = 'ball-wide';
+        else if (b.startsWith('Nb')) cls = 'ball-nb';
+        else if (b === '4') cls = 'ball-run4';
+        else if (b === '6') cls = 'ball-run6';
+        else if (b === '1') cls = 'ball-run1';
+        else if (b === '2') cls = 'ball-run2';
+        else if (b === '3') cls = 'ball-run3';
+        return `<div class="ball-icon ${cls}">${b}</div>`;
+    }).join('') || '';
+}
+
+// Load Stats
+async function loadStats() {
+    try {
+        const resp = await fetch(`${API}/api/matches/today`);
+        const data = await resp.json();
+        const completed = data.matches?.filter(m => m.status === 'completed').length || 0;
+        const live = data.matches?.filter(m => ['live','innings2'].includes(m.status)).length || 0;
+
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="card" style="padding:20px; text-align:center;">
+                <div style="font-size:36px; font-family:var(--font-display); color:var(--accent-green); letter-spacing:2px;">${completed}</div>
+                <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-top:4px;">Matches Today</div>
+            </div>
+            <div class="card" style="padding:20px; text-align:center;">
+                <div style="font-size:36px; font-family:var(--font-display); color:${live ? '#ef4444' : '#4b5563'}; letter-spacing:2px;">${live ? 'LIVE' : 'OFF'}</div>
+                <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-top:4px;">Match Status</div>
+            </div>
+            <div class="card" style="padding:20px; text-align:center;" id="statOrangeCap">
+                <div class="skeleton" style="height:40px; width:80%; margin:0 auto;"></div>
+                <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-top:4px;">Orange Cap</div>
+            </div>
+            <div class="card" style="padding:20px; text-align:center;" id="statPurpleCap">
+                <div class="skeleton" style="height:40px; width:80%; margin:0 auto;"></div>
+                <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-top:4px;">Purple Cap</div>
+            </div>
+        `;
+    } catch(e) {}
+}
+
+// Load Orange/Purple Cap
+async function loadLeaderboards() {
+    try {
+        const [ocResp, pcResp] = await Promise.all([
+            fetch(`${API}/api/analytics/orange-cap`),
+            fetch(`${API}/api/analytics/purple-cap`)
+        ]);
+        const oc = await ocResp.json();
+        const pc = await pcResp.json();
+
+        const ocBody = document.querySelector('#orangeCapTable tbody');
+        ocBody.innerHTML = oc.map((p, i) => `
+            <tr onclick="location.href='/player/${p.id}'" style="cursor:pointer;">
+                <td><span class="highlight">#${p.rank}</span></td>
+                <td><a href="/player/${p.id}" style="color:var(--text-primary); text-decoration:none; font-weight:600;">${p.name}</a></td>
+                <td><span class="highlight">${p.runs}</span></td>
+                <td>${p.matches}</td>
+                <td>${p.highest}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No data yet</td></tr>';
+
+        const pcBody = document.querySelector('#purpleCapTable tbody');
+        pcBody.innerHTML = pc.map((p, i) => `
+            <tr onclick="location.href='/player/${p.id}'" style="cursor:pointer;">
+                <td><span class="highlight">#${p.rank}</span></td>
+                <td><a href="/player/${p.id}" style="color:var(--text-primary); text-decoration:none; font-weight:600;">${p.name}</a></td>
+                <td><span class="highlight" style="color:#a78bfa;">${p.wickets}</span></td>
+                <td>${p.matches}</td>
+                <td>${p.best}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No data yet</td></tr>';
+
+        if (oc.length > 0) {
+            document.getElementById('statOrangeCap').querySelector('.skeleton')?.replaceWith(
+                Object.assign(document.createElement('div'), {
+                    style: 'font-size:28px; font-family:var(--font-display); color:var(--accent-gold); letter-spacing:2px;',
+                    textContent: `${oc[0].name} (${oc[0].runs})`
+                })
+            );
+        }
+        if (pc.length > 0) {
+            document.getElementById('statPurpleCap').querySelector('.skeleton')?.replaceWith(
+                Object.assign(document.createElement('div'), {
+                    style: 'font-size:28px; font-family:var(--font-display); color:#a78bfa; letter-spacing:2px;',
+                    textContent: `${pc[0].name} (${pc[0].wickets}w)`
+                })
+            );
+        }
+    } catch(e) {}
+}
+
+// Load Players
+async function loadPlayers() {
+    try {
+        const resp = await fetch(`${API}/api/players/`);
+        const players = await resp.json();
+        const grid = document.getElementById('playersGrid');
+        grid.innerHTML = players.slice(0, 10).map(p => `
+            <a href="/player/${p.id}" class="player-card">
+                <div class="player-avatar">${p.name[0]}</div>
+                <div class="player-name">${p.name}</div>
+                <div class="player-role-badge">${p.role}</div>
+                <div class="player-stats-mini">
+                    <div class="stat-mini">
+                        <span class="stat-mini-label">Runs</span>
+                        <span class="stat-mini-value">${p.career?.runs || 0}</span>
+                    </div>
+                    <div class="stat-mini">
+                        <span class="stat-mini-label">Wkts</span>
+                        <span class="stat-mini-value">${p.career?.wickets || 0}</span>
+                    </div>
+                </div>
+            </a>
+        `).join('');
+    } catch(e) {
+        document.getElementById('playersGrid').innerHTML = '<div style="color:var(--text-muted); padding:20px;">Could not load players</div>';
+    }
+}
+
+// Init
+loadLiveMatch();
+loadStats();
+loadLeaderboards();
+loadPlayers();
+// Refresh live match every 5 seconds
+setInterval(loadLiveMatch, 5000);
+</script>
+{% endblock %}

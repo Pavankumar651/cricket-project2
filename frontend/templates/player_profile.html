@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Player Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <a href="/players" class="btn btn-secondary btn-sm mb-16">← Back to Players</a>
+
+    <div id="profileContent">
+        <div class="skeleton" style="height:180px; margin-bottom:24px; border-radius:12px;"></div>
+        <div class="grid-2 gap-20">
+            <div class="skeleton" style="height:280px; border-radius:12px;"></div>
+            <div class="skeleton" style="height:280px; border-radius:12px;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const playerId = {{ player_id }};
+
+async function loadProfile() {
+    const resp = await fetch(`/api/players/${playerId}`);
+    if (!resp.ok) {
+        document.getElementById('profileContent').innerHTML = '<div class="alert alert-danger">Player not found</div>';
+        return;
+    }
+    const p = await resp.json();
+
+    const formClass = p.recent_form.form === 'Hot Form' ? 'form-hot' :
+                      p.recent_form.form === 'Average Form' ? 'form-avg' : 'form-poor';
+    const formIcon  = p.recent_form.form === 'Hot Form' ? '🔥' :
+                      p.recent_form.form === 'Average Form' ? '📊' : '❄️';
+
+    document.getElementById('profileContent').innerHTML = `
+
+        <!-- Header -->
+        <div class="card mb-24" style="padding:32px;">
+            <div class="flex items-center gap-20">
+                <div class="player-avatar" style="width:80px; height:80px; font-size:32px; flex-shrink:0;">${p.name[0]}</div>
+                <div style="flex:1;">
+                    <div style="font-family:var(--font-display); font-size:40px; letter-spacing:3px; color:var(--text-primary); line-height:1;">${p.name.toUpperCase()}</div>
+                    <div style="display:flex; align-items:center; gap:12px; margin-top:8px; flex-wrap:wrap;">
+                        <span class="player-role-badge">${p.role}</span>
+                        <span class="badge ${formClass === 'form-hot' ? 'badge-gold' : formClass === 'form-avg' ? 'badge-blue' : ''}"
+                              style="${formClass === 'form-poor' ? 'background:rgba(107,114,128,0.15); color:#6b7280;' : ''}">
+                            ${formIcon} ${p.recent_form.form}
+                        </span>
+                        ${p.mvp_awards > 0 ? `<span class="badge badge-gold">⭐ MVP x${p.mvp_awards}</span>` : ''}
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-family:var(--font-display); font-size:48px; color:var(--accent-green); letter-spacing:2px; line-height:1;">${p.batting.total_runs}</div>
+                    <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted);">Career Runs</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2 gap-20" style="margin-bottom:20px;">
+
+            <!-- Batting Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🏏 BATTING</div>
+                </div>
+                <div class="card-body" style="padding:0;">
+                    <table class="data-table">
+                        <tbody>
+                            <tr><td>Matches</td><td class="highlight text-right">${p.batting.matches}</td></tr>
+                            <tr><td>Total Runs</td><td class="highlight text-right" style="font-size:20px;">${p.batting.total_runs}</td></tr>
+                            <tr><td>Balls Faced</td><td class="highlight text-right">${p.batting.balls_faced}</td></tr>
+                            <tr><td>Highest Score</td><td class="highlight text-right" style="color:var(--accent-gold);">${p.batting.highest_score}</td></tr>
+                            <tr><td>Average</td><td class="highlight text-right">${p.batting.average}</td></tr>
+                            <tr><td>Strike Rate</td><td class="highlight text-right">${p.batting.strike_rate}</td></tr>
+                            <tr><td>Fours (4s)</td><td class="highlight text-right">${p.batting.fours}</td></tr>
+                            <tr><td>Sixes (6s)</td><td class="highlight text-right" style="color:var(--accent-gold);">${p.batting.sixes}</td></tr>
+                            <tr><td>Singles</td><td class="highlight text-right">${p.batting.singles}</td></tr>
+                            <tr><td>Doubles</td><td class="highlight text-right">${p.batting.doubles}</td></tr>
+                            <tr><td>Triples</td><td class="highlight text-right">${p.batting.triples}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Bowling Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">⚡ BOWLING</div>
+                </div>
+                <div class="card-body" style="padding:0;">
+                    <table class="data-table">
+                        <tbody>
+                            <tr><td>Matches</td><td class="highlight text-right">${p.bowling.matches}</td></tr>
+                            <tr><td>Overs Bowled</td><td class="highlight text-right">${p.bowling.overs.toFixed(1)}</td></tr>
+                            <tr><td>Runs Given</td><td class="highlight text-right">${p.bowling.runs}</td></tr>
+                            <tr><td>Wickets</td><td class="highlight text-right" style="color:#a78bfa; font-size:20px;">${p.bowling.wickets}</td></tr>
+                            <tr><td>Economy</td><td class="highlight text-right">${p.bowling.economy}</td></tr>
+                            <tr><td>Best Figures</td><td class="highlight text-right" style="color:var(--accent-gold);">${p.bowling.best}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Recent Form -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📈 RECENT FORM — LAST 5 INNINGS</div>
+                <span class="${formClass}" style="font-weight:700;">${formIcon} ${p.recent_form.form}</span>
+            </div>
+            <div class="card-body">
+                ${p.recent_form.last_5_scores.length === 0
+                    ? '<div style="color:var(--text-muted); text-align:center; padding:20px;">No match data yet</div>'
+                    : `<div class="flex gap-12 flex-wrap">
+                        ${p.recent_form.last_5_scores.map((score, i) => `
+                            <div style="text-align:center;">
+                                <div style="
+                                    width:64px; height:64px;
+                                    border-radius:50%;
+                                    background: ${score >= 30 ? 'rgba(245,158,11,0.15)' : score >= 15 ? 'rgba(34,197,94,0.1)' : 'rgba(107,114,128,0.1)'};
+                                    border: 2px solid ${score >= 30 ? 'var(--accent-gold)' : score >= 15 ? 'var(--accent-green)' : '#374151'};
+                                    display:flex; align-items:center; justify-content:center;
+                                    font-family:var(--font-display); font-size:22px;
+                                    color: ${score >= 30 ? 'var(--accent-gold)' : score >= 15 ? 'var(--accent-green)' : '#6b7280'};
+                                ">${score}</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Inns ${i+1}</div>
+                            </div>
+                        `).join('')}
+                    </div>`
+                }
+            </div>
+        </div>
+    `;
+}
+
+loadProfile();
+</script>
+{% endblock %}
