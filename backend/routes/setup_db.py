@@ -1,3 +1,8 @@
+import sys
+import os
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from backend.app import create_app, db
 from backend.models.models import Admin, Player, PlayerCareerStats
 from werkzeug.security import generate_password_hash
@@ -6,6 +11,7 @@ app = create_app()
 
 with app.app_context():
     db.create_all()
+    print("Tables created")
 
     if not Admin.query.filter_by(username='admin').first():
         admin = Admin(
@@ -15,6 +21,11 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
         print("Admin created")
+    else:
+        admin = Admin.query.filter_by(username='admin').first()
+        admin.password_hash = generate_password_hash('admin123')
+        db.session.commit()
+        print("Admin password reset")
 
     players = [
         'Pavankumar', 'Veeresh', 'Darshan', 'Sukin', 'Yashwanth',
@@ -29,6 +40,7 @@ with app.app_context():
             db.session.flush()
             cs = PlayerCareerStats(player_id=p.id)
             db.session.add(cs)
+            print(f"Added: {name}")
 
     db.session.commit()
-    print("Setup complete!")
+    print("Setup complete! Login: admin / admin123")
